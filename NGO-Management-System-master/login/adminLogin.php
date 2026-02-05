@@ -2,26 +2,54 @@
 session_start();
 require_once "../pdo.php";
 
+/* =========================
+   STATIC ORGANIZATION CODE
+   ========================= */
+define('ORG_CODE', 'NGO2026');
+
 if (isset($_POST['cancel'])) {
     header('Location: ../index.php');
     return;
 }
 
-if (isset($_POST['username']) && isset($_POST['password'])) {
-    if (strlen($_POST['username']) > 0 && strlen($_POST['password']) > 0) {
+if (
+    isset($_POST['username']) &&
+    isset($_POST['password']) &&
+    isset($_POST['org_code'])
+) {
 
-        // ⚠️ (For learning project only – later improve with prepared statements & hashing)
-        $stmt = $pdo->query(
-            "SELECT admin_id FROM admin_login 
-             WHERE username = '" . $_POST['username'] . "' 
-             AND password = '" . $_POST['password'] . "'"
+    if (
+        strlen($_POST['username']) > 0 &&
+        strlen($_POST['password']) > 0 &&
+        strlen($_POST['org_code']) > 0
+    ) {
+
+        /* ❌ Organization code check */
+        if ($_POST['org_code'] !== ORG_CODE) {
+            $_SESSION['error'] = "Invalid Organization Code";
+            header("Location: adminLogin.php");
+            return;
+        }
+
+        /* ✅ Check admin credentials */
+        $stmt = $pdo->prepare(
+            "SELECT admin_id
+             FROM admin_login
+             WHERE username = :username
+               AND password = :password"
         );
+
+        $stmt->execute([
+            ':username' => $_POST['username'],
+            ':password' => $_POST['password']
+        ]);
 
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($row) {
             $_SESSION['admin_id'] = $row['admin_id'];
             $_SESSION['role'] = 2;
+
             header("Location: ../index.php");
             return;
         } else {
@@ -44,17 +72,12 @@ if (isset($_POST['username']) && isset($_POST['password'])) {
 
     <style>
         body {
-            background-color: #a3c2c2; /* SAME as donor page */
+            background-color: #a3c2c2;
         }
 
         .login-card {
             max-width: 600px;
             margin: 80px auto;
-        }
-
-        .table thead {
-            background-color: #343a40;
-            color: white;
         }
     </style>
 </head>
@@ -100,6 +123,16 @@ if (isset($_POST['username']) && isset($_POST['password'])) {
                             <td>
                                 <input type="password"
                                        name="password"
+                                       class="form-control"
+                                       required>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td><strong>Organization Code</strong></td>
+                            <td>
+                                <input type="password"
+                                       name="org_code"
                                        class="form-control"
                                        required>
                             </td>
