@@ -34,6 +34,8 @@ The Volunteer who is Conducting Tasks
 # Software Requirements
 * xampp
 * browser
+* leptop
+* 
 
 # Quick Guide
 1. Clone this repo to your documents root e.g under `c:\xampp\htdocs\` on windows
