@@ -4,11 +4,21 @@ session_start();
 
 // Handle form submission
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['cname'])) {
-    $cname = trim($_POST['cname']);
+
+    $cname   = trim($_POST['cname']);
+    $address = trim($_POST['address'] ?? '');
+    $mobile  = trim($_POST['mobile_no'] ?? '');
 
     if (!empty($cname)) {
-        $stmt = $pdo->prepare("INSERT INTO city (cname) VALUES (:cname)");
-        $stmt->execute([':cname' => $cname]);
+
+        $stmt = $pdo->prepare("INSERT INTO city (cname, Address, mobile_no) 
+                               VALUES (:cname, :address, :mobile)");
+
+        $stmt->execute([
+            ':cname'   => $cname,
+            ':address' => $address,
+            ':mobile'  => $mobile
+        ]);
 
         $_SESSION['success'] = "City added successfully.";
         header("Location: city.php");
@@ -82,13 +92,37 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['cname'])) {
             <?php unset($_SESSION['error']); ?>
         <?php endif; ?>
 
+        <?php if (isset($_SESSION['success'])): ?>
+            <div class="alert alert-success"><?= htmlspecialchars($_SESSION['success']) ?></div>
+            <?php unset($_SESSION['success']); ?>
+        <?php endif; ?>
+
         <form method="post">
+
             <div class="form-group">
                 <label for="cname">City Name</label>
                 <input type="text" class="form-control" id="cname" name="cname" required>
             </div>
-            <button type="submit" class="btn btn-success">Add City</button>
+
+            <div class="form-group">
+                <label for="address">Address</label>
+                <input type="text" class="form-control" id="address" name="address" placeholder="Enter Address">
+            </div>
+
+            <div class="form-group">
+                <label for="mobile_no">Mobile Number</label>
+                <input type="tel"
+                       class="form-control"
+                       id="mobile_no"
+                       name="mobile_no"
+                       pattern="[0-9]{10}"
+                       maxlength="10"
+                       placeholder="Enter 10 digit mobile number">
+            </div>
+
+            <button type="submit" class="btn btn-success">+ Add City</button>
             <a href="city.php" class="btn btn-secondary">Cancel</a>
+
         </form>
     </div>
 </div>
