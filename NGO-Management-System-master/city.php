@@ -14,14 +14,14 @@ $cities = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         body {
-            background-color: #a3c6c4;
+            background-color: #a9c5c0;
         }
         .dashboard-box {
             background-color: #f8f9fa;
             border-radius: 10px;
             padding: 30px;
             margin-top: 50px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 15px rgba(74, 154, 219, 0.1);
         }
         .navbar-text, .text-light {
             font-weight: 500;
@@ -82,6 +82,8 @@ $cities = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <tr>
                 <th>City ID</th>
                 <th>City Name</th>
+                <th>Address</th>
+                <th>Mobile No.</th>
             </tr>
         </thead>
         <tbody>
@@ -89,6 +91,8 @@ $cities = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <tr>
                     <td><?= htmlspecialchars($city['city_id']) ?></td>
                     <td><?= htmlspecialchars($city['cname']) ?></td>
+                    <td><?= htmlspecialchars($city['Address']) ?></td>
+                    <td><?= htmlspecialchars($city['mobile_no']) ?></td>
                 </tr>
             <?php endforeach; ?>
         </tbody>
