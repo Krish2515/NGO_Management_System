@@ -15,23 +15,37 @@ $stmt = $pdo->prepare("SELECT name FROM donor WHERE donor_id = ?");
 $stmt->execute([$_SESSION['donor_id']]);
 $donor = $stmt->fetch(PDO::FETCH_ASSOC);
 $donor_name = $donor ? $donor['name'] : 'Donor';
-$indexFlag=1;
-// Fetch total donations from `transaction` table
+
+$indexFlag = 1;
+
+// ✅ Total MONEY donated
 $stmt = $pdo->prepare("
-    SELECT SUM(amount) AS total_donations
-    FROM transaction
+    SELECT SUM(amount) 
+    FROM `transaction`
     WHERE donor_id = ?
 ");
 $stmt->execute([$_SESSION['donor_id']]);
-$result = $stmt->fetch(PDO::FETCH_ASSOC);
-$total_donations = $result['total_donations'] !== null ? (float)$result['total_donations'] : 0;
+$totalMoney = $stmt->fetchColumn();
+$totalMoney = $totalMoney ? $totalMoney : 0;
+
+// ✅ Total ITEMS donated
+$stmt2 = $pdo->prepare("
+    SELECT SUM(item_count)
+    FROM items
+    WHERE donor_id = ?
+");
+$stmt2->execute([$_SESSION['donor_id']]);
+$totalItems = $stmt2->fetchColumn();
+$totalItems = $totalItems ? $totalItems : 0;
 ?>
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
     <title>Donor Dashboard</title>
+
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
     <style>
         body {
             background-color: #a3c6c4;
@@ -51,9 +65,7 @@ $total_donations = $result['total_donations'] !== null ? (float)$result['total_d
 </head>
 <body>
 
-
 <?php require_once "donorNev.php"; ?>
-
 
 <!-- Main Container -->
 <div class="container dashboard-box">
@@ -76,21 +88,37 @@ $total_donations = $result['total_donations'] !== null ? (float)$result['total_d
     <!-- Banner -->
     <div class="row mb-4 donation-banner">
         <div class="col-12 text-center">
-            <img src="images/index/donate.jpg" alt="Donate" 
+            <img src="images/index/donate.jpg" alt="Donate"
                  class="img-fluid rounded shadow-lg">
         </div>
     </div>
 
-    <!-- Donation Section -->
+    <!-- Donation Summary -->
     <div class="row justify-content-center">
         <div class="col-md-6 text-center">
-            <h2 class="shadow-lg p-3 mb-4 bg-light rounded">
-                Your Overall Donations Are ₹ <?= htmlentities(number_format($total_donations, 2)) ?>
-            </h2>
-            <a class="btn btn-primary btn-lg m-2 shadow-lg" style="width:200px;" 
-               href="donor/donateMoney.php">Donate</a>
-            <a class="btn btn-secondary btn-lg m-2 shadow-lg" style="width:200px;" 
-                href="donor/transactions.php">Transaction</a>
+
+            <div class="shadow-lg p-4 mb-4 bg-light rounded">
+
+                <h3>Your Overall Donations</h3>
+
+                <h4 class="mt-3">
+                    💰 ₹ <?= number_format($totalMoney, 2) ?>
+                </h4>
+
+                <h5 class="mt-3">
+                    📦 Items Donated: <?= $totalItems ?>
+                </h5>
+
+            </div>
+
+            <a class="btn btn-primary btn-lg m-2 shadow-lg" style="width:200px;"
+               href="donor/donateChoice.php">Donate</a>
+
+            <a class="btn btn-secondary btn-lg m-2 shadow-lg" style="width:200px;"
+               href="donor/transactions.php">Transaction</a>
+
+            <a class="btn btn-info btn-lg m-2 shadow-lg" style="width:200px;"
+                href="donor/itemHistory.php">Donated Items</a>
 
         </div>
     </div>
