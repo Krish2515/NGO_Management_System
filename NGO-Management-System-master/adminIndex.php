@@ -1,61 +1,79 @@
 <?php
 require_once "pdo.php";
-//session_start(); // Ensure session is started for admin name to work
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
 
-// Calculate total donations
-$stmtTotal = $pdo->query("
-    SELECT COALESCE(SUM(amount), 0) AS donation_total
+/* ============================
+   TOTAL DONATIONS
+============================ */
+$totalDonation = $pdo->query("
+    SELECT COALESCE(SUM(amount),0) 
     FROM transaction
-");
-$totalRow = $stmtTotal->fetch(PDO::FETCH_ASSOC);
-$totalDonation = $totalRow['donation_total'];
+")->fetchColumn();
 
-// Fetch all donors with city, donation, and project names
-$stmt = $pdo->query("
-    SELECT d.donor_id, d.name AS donor_name, c.cname AS city, 
-           p.name AS project_name,
-           SUM(t.amount) AS amount
-    FROM donor d
-    JOIN city c ON d.city_id = c.city_id
-    JOIN transaction t ON d.donor_id = t.donor_id
+$totalItems = $pdo->query("
+    SELECT COALESCE(SUM(item_count),0) 
+    FROM items
+")->fetchColumn();
+
+// Fetch money donations
+$moneyStmt = $pdo->query("
+    SELECT d.name AS donor_name, p.name AS project,
+           t.amount, t.tdate
+    FROM transaction t
+    JOIN donor d ON t.donor_id = d.donor_id
     JOIN projects p ON t.project_id = p.project_id
-    GROUP BY d.donor_id, d.name, c.cname, p.name
-    ORDER BY c.cname, d.name, p.name
+    ORDER BY t.tdate DESC
 ");
 
+$moneyDonations = $moneyStmt->fetchAll(PDO::FETCH_ASSOC);
 
-$donors = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Fetch item donations
+$itemStmt = $pdo->query("
+    SELECT d.name AS donor_name, i.item, i.item_count,
+           i.category, i.donated_at
+    FROM items i
+    JOIN donor d ON i.donor_id = d.donor_id
+    ORDER BY i.donated_at DESC
+");
+
+$itemDonations = $itemStmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
-
 <!DOCTYPE html>
 <html>
 <head>
     <title>List of Donors</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <link rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
     <style>
-        body { background-color: #a3c2c2;}
-        .card-box {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            max-width: 1000px;
-            margin: 40px auto;
-            box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
-        }
-        .table thead {
-            background-color: #343a40;
-            color: white;
-        }
-        .donation-total {
-            text-align: center;
-            font-weight: bold;
-            font-size: 1.5rem;
-            margin-bottom: 20px;
-        }
-    </style>
+body { background:#a3c2c2; }
+
+.box {
+    background:white;
+    border-radius:10px;
+    padding:25px;
+    margin-top:30px;
+    box-shadow:0 0 15px rgba(0,0,0,0.15);
+}
+
+/* scrollable table */
+.scroll-box {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.donation-total {
+    text-align: center;
+    margin: 20px 0;
+}
+</style>
 </head>
 <body>
 
+<!-- NAVBAR -->
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-lg p-3 mb-5">
     <a class="navbar-brand" href="javascript:void(0)">NGO</a>
@@ -98,59 +116,83 @@ $donors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </nav>
 
 
-<div class="container mt-5">
-    <div class="card shadow-lg rounded">
-        <div class="card-body">
 
-            <!-- Heading -->
-            <h3 class="text-center fw-bold mb-3">List of Donors</h3>
+   <div class="container box">
 
-            <!-- Total Donation -->
-           <div class="donation-total"> The Overall Donations Are ₹ <?php echo number_format($totalDonation); ?> </div>
-
-            <!-- Table -->
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped text-center">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>S.No</th>
-                            <th>Donor Name</th>
-                            <th>City</th>
-                            <th>Project</th>
-                            <th>Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if ($donors): ?>
-                            <?php $sno = 1; foreach ($donors as $d): ?>
-                                <tr>
-                                    <td><?= $sno++; ?></td>
-                                    <td><?= htmlentities($d['donor_name']); ?></td>
-                                    <td><?= htmlentities($d['city']); ?></td>
-                                    <td><?= htmlentities($d['project_name']); ?></td>
-                                    <td>₹ <?= number_format($d['amount']); ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="5" class="text-muted">
-                                    No donation records found
-                                </td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Back Button -->
-            <div class="text-center mt-4">
-                <a href="index.php" class="btn btn-secondary">
-                    ← Back to Dashboard
-                </a>
-            </div>
-
-        </div>
+    <div class="d-flex justify-content-between mb-3">
+        <h3>All Donations</h3>
     </div>
+
+    <div class="donation-total">
+        <h4>Overall Donations : ₹ <?= number_format($totalDonation); ?></h4>
+    </div>
+
+    <div class="donation-total">
+        <h4>Overall Items Donated : <?= number_format($totalItems); ?></h4>
+    </div>
+    
+    <!-- MONEY DONATIONS -->
+    <h5 class="mt-3">Money Donations</h5>
+
+    <div class="scroll-box">
+        <table class="table table-bordered table-striped text-center">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Donor</th>
+                    <th>Project</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+            <?php if ($moneyDonations): ?>
+                <?php foreach ($moneyDonations as $m): ?>
+                    <tr>
+                        <td><?= htmlentities($m['donor_name']) ?></td>
+                        <td><?= htmlentities($m['project']) ?></td>
+                        <td>₹ <?= number_format($m['amount']) ?></td>
+                        <td><?= $m['tdate'] ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <tr><td colspan="4">No records</td></tr>
+            <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ITEM DONATIONS -->
+    <h5 class="mt-4">Item Donations</h5>
+
+    <div class="scroll-box">
+        <table class="table table-bordered table-striped text-center">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Donor</th>
+                    <th>Item</th>
+                    <th>Count</th>
+                    <th>Category</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+            <?php if ($itemDonations): ?>
+                <?php foreach ($itemDonations as $i): ?>
+                    <tr>
+                        <td><?= htmlentities($i['donor_name']) ?></td>
+                        <td><?= htmlentities($i['item']) ?></td>
+                        <td><?= $i['item_count'] ?></td>
+                        <td><?= htmlentities($i['category']) ?></td>
+                        <td><?= $i['donated_at'] ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <tr><td colspan="5">No records</td></tr>
+            <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+
 </div>
 
 </body>
