@@ -22,176 +22,165 @@ $projects = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
-
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>NGO Projects</title>
+    <title>Our Projects - NGO Portal</title>
 
-  <!-- Bootstrap 5.3.3 CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap 4 (Same as about.php) -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 
-  <style>
-    body {
-      background-color: #a9d0cd;
-      font-family: Arial, sans-serif;
-    }
+    <style>
+        body {
+            background-color: #a9d0cd;
+        }
 
-    .custom-box {
-      background-color: #2e2e2e;
-      border-radius: 10px;
-      padding: 20px;
-      box-shadow: 3px 3px 15px rgba(0, 0, 0, 0.3);
-      margin-bottom: 40px;
-      color: #ffffff;
-    }
+        .hero {
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
+                        url('https://images.unsplash.com/photo-1509099836639-18ba1795216d');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 100px 20px;
+            text-align: center;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            margin-bottom: 40px;
+        }
 
-    h2,
-    h4 {
-      font-weight: bold;
-    }
+        .project-box {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            margin-bottom: 40px;
+            transition: 0.3s;
+        }
 
-    .carousel {
-      background-color: #2e2e2e;
-      padding: 10px;
-      border-radius: 10px;
-    }
+        .project-box:hover {
+            transform: translateY(-5px);
+        }
 
-    .carousel img {
-      width: 100%;
-      height: auto;
-      max-height: 400px;
-      object-fit: contain;
-      border-radius: 8px;
-      display: block;
-      margin: 0 auto;
-    }
+        h2, h4 {
+            font-weight: 700;
+            color: #1e3c72;
+        }
 
-    .carousel-indicators [data-bs-target] {
-      background-color: #ffffff;
-    }
-
-    @media (max-width: 768px) {
-      .navbar-brand {
-        font-size: 1.3rem;
-      }
-
-      .nav-link {
-        font-size: 1rem;
-      }
-    }
-  </style>
+        .progress {
+            height: 25px;
+        }
+    </style>
 </head>
 
 <body>
 
-  <!-- ✅ Custom Dark Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark shadow-lg p-3 mb-5" style="background-color: #212529;">
-    <a class="navbar-brand" href="#">NGO</a>
-    <a class="nav-link text-white" href="project.php" style="margin-right: 20px;">Projects</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-      aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+<!-- SAME NAVBAR AS about.php -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-lg p-3 mb-5">
+  <a class="navbar-brand" href="#">NGO</a>
+  <a class="navbar-brand" href="project.php">Projects</a>
 
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto">
-        <li class="nav-item active">
-          <a class="nav-link" href="#">Please Login To Continue</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+    <ul class="navbar-nav">
+        <li class="nav-item">
+            <a class="navbar-brand" href="index.php"><- Back</a>
         </li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown"
-            aria-expanded="false">
-            Login Here
-          </a>
-          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-            <li><a class="dropdown-item" href="login/adminLogin.php">Admin</a></li>
-            <li><a class="dropdown-item" href="login/donorLogin.php">Donor</a></li>
-            <li><a class="dropdown-item" href="login/volunteerLogin.php">Volunteer</a></li>
-          </ul>
-        </li>
-      </ul>
+    </ul>
+  </div>
+</nav>
+
+<div class="container">
+
+    <!-- Hero Section -->
+    <div class="hero">
+        <h1 class="font-weight-bold">Our Projects</h1>
+        <p class="lead">Support our ongoing initiatives and make a difference.</p>
     </div>
-  </nav>
 
-  <!-- ✅ Project Section -->
-  <div class="container mt-5">
-    <h2 class="text-center mb-4">Our Projects</h2>
+    <?php foreach ($projects as $project): ?>
 
-    <div class="row justify-content-center">
-      <?php foreach ($projects as $project): ?>
         <?php
-        // Fetch images for this project
         $stmtImg = $pdo->prepare("SELECT image_path FROM project_images WHERE project_id = :pid");
         $stmtImg->execute([':pid' => $project['project_id']]);
         $images = $stmtImg->fetchAll(PDO::FETCH_ASSOC);
+
+        $total = $project['target_amount'] - $project['remaining_amount'];
+        $per = ($project['target_amount'] > 0) 
+            ? ($total / $project['target_amount']) * 100 
+            : 0;
         ?>
-        <div class="col-md-12 custom-box">
-          <div class="row">
-            <div class="col-md-6">
-              <h4><?= htmlspecialchars($project['name']) ?></h4>
-              <p><?= nl2br(htmlspecialchars($project['description'])) ?></p>
-              <p><strong>Start Date:</strong> <?= htmlspecialchars($project['start_date']) ?></p>
-              <p><strong>End Date:</strong> <?= htmlspecialchars($project['end_date']) ?></p>
-              <p><strong>Target Amount:</strong> ₹<?= htmlspecialchars($project['target_amount']) ?></p>
-              <p><strong>Remaining Amount:</strong> ₹<?= htmlspecialchars($project['remaining_amount']) ?></p>
-              <?php $total = $project['target_amount'] - $project['remaining_amount'];
-              $per = ($total / $project['target_amount']) * 100; ?>
-              <div class="progress" style="height: 25px;">
-                <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="<?= $per ?>" aria-valuemin="0" aria-valuemax="100" style="width: <?= $per ?>%;"></div>
-              </div>
-            </div>
-            <?php if (!empty($images)): ?>
-              <div class="col-md-6">
-                <div id="carousel<?= $project['project_id'] ?>" class=" carousel slide mb-3" data-bs-ride="carousel">
-                  <div class="carousel-indicators">
-                    <?php foreach ($images as $index => $img): ?>
-                      <button type="button"
-                        data-bs-target="#carousel<?= $project['project_id'] ?>"
-                        data-bs-slide-to="<?= $index ?>"
-                        class="<?= $index === 0 ? 'active' : '' ?> "
-                        aria-current="<?= $index === 0 ? 'true' : 'false' ?>"
-                        aria-label="Slide <?= $index + 1 ?>"></button>
-                    <?php endforeach; ?>
-                  </div>
 
-                  <div class="carousel-inner">
-                    <?php foreach ($images as $index => $img): ?>
-                      <div class="carousel-item <?= $index === 0 ? 'active' : '' ?>">
-                        <img src="<?= htmlspecialchars($img['image_path']) ?>" class="d-block w-100" alt="Project Image">
-                      </div>
-                    <?php endforeach; ?>
-                  </div>
+        <div class="project-box">
+            <div class="row">
+                <div class="col-md-6">
+                    <h4><?= htmlspecialchars($project['name']) ?></h4>
+                    <p><?= nl2br(htmlspecialchars($project['description'])) ?></p>
 
-                  <button class="carousel-control-prev" type="button" data-bs-target="#carousel<?= $project['project_id'] ?>" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Previous</span>
-                  </button>
-                  <button class="carousel-control-next" type="button" data-bs-target="#carousel<?= $project['project_id'] ?>" data-bs-slide="next">
-                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Next</span>
-                  </button>
+                    <p><strong>Start Date:</strong> <?= htmlspecialchars($project['start_date']) ?></p>
+                    <p><strong>End Date:</strong> <?= htmlspecialchars($project['end_date']) ?></p>
+                    <p><strong>Target Amount:</strong> ₹<?= htmlspecialchars($project['target_amount']) ?></p>
+                    <p><strong>Remaining Amount:</strong> ₹<?= htmlspecialchars($project['remaining_amount']) ?></p>
+
+                    <div class="progress">
+                        <div class="progress-bar bg-success progress-bar-striped progress-bar-animated"
+                             role="progressbar"
+                             style="width: <?= $per ?>%;">
+                        </div>
+                    </div>
                 </div>
-              </div>
+
+                <?php if (!empty($images)): ?>
+                <div class="col-md-6">
+                    <div id="carousel<?= $project['project_id'] ?>" class="carousel slide" data-ride="carousel">
+                        <div class="carousel-inner">
+                            <?php foreach ($images as $index => $img): ?>
+                                <div class="carousel-item <?= $index === 0 ? 'active' : '' ?>">
+                                    <img src="<?= htmlspecialchars($img['image_path']) ?>" 
+                                         class="d-block w-100" 
+                                         style="border-radius:10px;">
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+
+                        <a class="carousel-control-prev" 
+                           href="#carousel<?= $project['project_id'] ?>" 
+                           role="button" data-slide="prev">
+                            <span class="carousel-control-prev-icon"></span>
+                        </a>
+
+                        <a class="carousel-control-next" 
+                           href="#carousel<?= $project['project_id'] ?>" 
+                           role="button" data-slide="next">
+                            <span class="carousel-control-next-icon"></span>
+                        </a>
+                    </div>
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- Donate Button -->
+            <?php if (isset($_SESSION['donor_id'])): ?>
+                <a href="donate.php?project_id=<?= $project['project_id'] ?>" 
+                   class="btn btn-success btn-block mt-3">
+                   Donate Now
+                </a>
+            <?php else: ?>
+                <a href="login/donorLogin.php" 
+                   class="btn btn-success btn-block mt-3">
+                   Donate Now
+                </a>
             <?php endif; ?>
-          </div>
-          <!-- ✅ Donate Button with login check -->
-          <?php if (isset($_SESSION['donor_id'])): ?>
-            <a href="donate.php?project_id=<?= $project['project_id'] ?>" class="btn btn-success w-100 mt-2">
-              Donate Now
-            </a>
-          <?php else: ?>
-            <a href="login/donorLogin.php?" class="btn btn-success w-100 mt-2">
-              Donate Now
-            </a>
-          <?php endif; ?>
         </div>
-      <?php endforeach; ?>
-    </div>
-  </div>
 
-  <!-- Bootstrap 5.3.3 Bundle JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <?php endforeach; ?>
+
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
-
 </html>
